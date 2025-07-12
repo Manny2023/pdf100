@@ -1,0 +1,20 @@
+{
+  "name": "mannymansistem",
+  "short_name": "mannyPDF",
+  "start_url": ".",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#ff8800",
+  "icons": [
+    {
+      "src": "https://ia600902.us.archive.org/29/items/manny512/manny192.jpg",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "https://archive.org/download/manny512/manny512.jpg",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}
