@@ -5,6 +5,13 @@ qInput.addEventListener("input", () => {
 });
 
 document.getElementById("convertBtn").addEventListener("click", async () => {
+  
+const progressBar = document.getElementById("progressBar");
+const doneSound = document.getElementById("doneSound");
+const pdfNameInput = document.getElementById("pdfName");
+
+  progressBar.style.display = "block";
+  progressBar.value = 0;
   const { jsPDF } = window.jspdf;
   const pdf = new jsPDF();
   const input = document.getElementById("fileInput");
@@ -46,10 +53,18 @@ document.getElementById("convertBtn").addEventListener("click", async () => {
 
         if (i > 0) pdf.addPage();
         pdf.addImage(compressed, "JPEG", x, y, nw, nh);
-        resolve();
+        
+  progressBar.value = ((i + 1) / files.length) * 100;
+  resolve();
+
       };
     });
   }
 
-  pdf.save("mannymansistem.pdf");
+  
+  const pdfName = pdfNameInput.value.trim() || "catalogo";
+  pdf.save(`${pdfName}.pdf`);
+  doneSound.play();
+  progressBar.style.display = "none";
+
 });
