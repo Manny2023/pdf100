@@ -1,38 +1,54 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8">
-  <title>mannymansistem</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <link rel="manifest" href="manifest.json">
-  <link rel="stylesheet" href="style.css">
-  <script>
-    if ('serviceWorker' in navigator) {
-      window.addEventListener('load', () => {
-        navigator.serviceWorker.register('service-worker.js');
-      });
-    }
-  </script>
+  <meta charset="UTF-8" />
+  <title>Generar PDF con jsPDF</title>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 </head>
 <body>
-  <div class="container">
-    <h1>mannymansistem</h1>
-    <p>Sube imágenes (.webp, .jpg, .png) y crea tu PDF 📝</p>
-    <input type="file" id="fileInput" multiple accept="image/*"><br><br>
-    <label for="quality">Calidad JPG (%): </label>
-    <input type="range" id="quality" min="0.1" max="1.0" step="0.1" value="0.6">
-    <span id="qVal">60%</span><br><br>
-    <button id="convertBtn">Crear PDF</button>
-  </div>
-  <script src="app.js"></script>
+  <h1>Generador de PDF con Imágenes</h1>
+  <input type="file" id="fileInput" multiple accept="image/*" /><br><br>
+  <button onclick="crearPDF()">Crear PDF</button>
 
-  <label for="pdfName">Nombre del PDF:</label>
-  <input type="text" id="pdfName" placeholder="Ejemplo: catalogo-avon" />
+  <script>
+    async function crearPDF() {
+      const { jsPDF } = window.jspdf;
+      const pdf = new jsPDF();
 
-  <progress id="progressBar" value="0" max="100" style="width:100%; display:none;"></progress>
+      const files = document.getElementById('fileInput').files;
+      if (files.length === 0) {
+        alert('Por favor, carga imágenes.');
+        return;
+      }
 
-  <audio id="doneSound" src="https://www.soundjay.com/buttons/sounds/button-3.mp3" preload="auto"></audio>
+      for (let i = 0; i < files.length; i++) {
+        const file = files[i];
 
+        // Convertir archivo a Data URL
+        const reader = new FileReader();
+        reader.readAsDataURL(file);
+        await new Promise((resolve) => {
+          reader.onload = () => {
+            const imgData = reader.result;
+
+            // Obtener tamaño de la página
+            const pageWidth = pdf.internal.pageSize.getWidth();
+            const pageHeight = pdf.internal.pageSize.getHeight();
+
+            // Agregar la imagen ajustando al tamaño de la página
+            pdf.addImage(imgData, 'JPEG', 0, 0, pageWidth, pageHeight);
+
+            if (i < files.length - 1) {
+              pdf.addPage();
+            }
+            resolve();
+          };
+        });
+      }
+
+      // Guardar PDF
+      pdf.save('imagenes.pdf');
+    }
+  </script>
 </body>
 </html>
