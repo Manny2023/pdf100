@@ -3,52 +3,47 @@
 <head>
   <meta charset="UTF-8" />
   <title>Generar PDF con jsPDF</title>
+  <!-- Carga segura y actual de jsPDF -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 </head>
 <body>
   <h1>Generador de PDF con Imágenes</h1>
   <input type="file" id="fileInput" multiple accept="image/*" /><br><br>
-  <button onclick="crearPDF()">Crear PDF</button>
+  <button id="btnCrearPDF">Crear PDF</button>
 
   <script>
-    async function crearPDF() {
+    document.getElementById('btnCrearPDF').addEventListener('click', async () => {
       const { jsPDF } = window.jspdf;
       const pdf = new jsPDF();
 
       const files = document.getElementById('fileInput').files;
       if (files.length === 0) {
-        alert('Por favor, carga imágenes.');
+        alert('Por favor, carga al menos una imagen.');
         return;
       }
 
       for (let i = 0; i < files.length; i++) {
         const file = files[i];
-
-        // Convertir archivo a Data URL
-        const reader = new FileReader();
-        reader.readAsDataURL(file);
-        await new Promise((resolve) => {
-          reader.onload = () => {
-            const imgData = reader.result;
-
-            // Obtener tamaño de la página
-            const pageWidth = pdf.internal.pageSize.getWidth();
-            const pageHeight = pdf.internal.pageSize.getHeight();
-
-            // Agregar la imagen ajustando al tamaño de la página
-            pdf.addImage(imgData, 'JPEG', 0, 0, pageWidth, pageHeight);
-
-            if (i < files.length - 1) {
-              pdf.addPage();
-            }
-            resolve();
-          };
+        const imgData = await new Promise((resolve, reject) => {
+          const reader = new FileReader();
+          reader.onload = e => resolve(e.target.result);
+          reader.onerror = err => reject(err);
+          reader.readAsDataURL(file);
         });
+
+        const pageWidth = pdf.internal.pageSize.getWidth();
+        const pageHeight = pdf.internal.pageSize.getHeight();
+
+        // Añade imagen ajustada para llenar la página
+        pdf.addImage(imgData, 'JPEG', 0, 0, pageWidth, pageHeight);
+
+        if (i < files.length - 1) {
+          pdf.addPage();
+        }
       }
 
-      // Guardar PDF
       pdf.save('imagenes.pdf');
-    }
+    });
   </script>
 </body>
 </html>
