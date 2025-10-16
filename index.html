@@ -2,47 +2,79 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8" />
-  <title>Generar PDF con jsPDF</title>
-  <!-- Carga segura y actual de jsPDF -->
+  <title>mannymansistem</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link rel="manifest" href="manifest.json" />
+  <link rel="stylesheet" href="style.css" />
+  <script>
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('service-worker.js');
+      });
+    }
+  </script>
+  <!-- Carga de jsPDF desde CDN -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 </head>
 <body>
-  <h1>Generador de PDF con Imágenes</h1>
-  <input type="file" id="fileInput" multiple accept="image/*" /><br><br>
-  <button id="btnCrearPDF">Crear PDF</button>
+  <div class="container">
+    <h1>mannymansistem</h1>
+    <p>Sube imágenes (.webp, .jpg, .png) y crea tu PDF 📝</p>
+    <input type="file" id="fileInput" multiple accept="image/*" /><br /><br />
+    <label for="quality">Calidad JPG (%): </label>
+    <input type="range" id="quality" min="0.1" max="1.0" step="0.1" value="0.6" />
+    <span id="qVal">60%</span><br /><br />
+    <button id="convertBtn">Crear PDF</button>
+  </div>
+
+  <label for="pdfName">Nombre del PDF:</label>
+  <input type="text" id="pdfName" placeholder="Ejemplo: catalogo-avon" />
+
+  <progress id="progressBar" value="0" max="100" style="width: 100%; display: none;"></progress>
+
+  <audio id="doneSound" src="https://www.soundjay.com/buttons/sounds/button-3.mp3" preload="auto"></audio>
 
   <script>
-    document.getElementById('btnCrearPDF').addEventListener('click', async () => {
+    const qualityInput = document.getElementById('quality');
+    const qVal = document.getElementById('qVal');
+    qualityInput.oninput = () => {
+      qVal.textContent = Math.round(qualityInput.value * 100) + '%';
+    };
+
+    document.getElementById('convertBtn').addEventListener('click', async () => {
       const { jsPDF } = window.jspdf;
       const pdf = new jsPDF();
 
       const files = document.getElementById('fileInput').files;
-      if (files.length === 0) {
-        alert('Por favor, carga al menos una imagen.');
+      if (!files.length) {
+        alert('Por favor, selecciona al menos una imagen.');
         return;
       }
+
+      const pageWidth = pdf.internal.pageSize.getWidth();
+      const pageHeight = pdf.internal.pageSize.getHeight();
 
       for (let i = 0; i < files.length; i++) {
         const file = files[i];
         const imgData = await new Promise((resolve, reject) => {
           const reader = new FileReader();
-          reader.onload = e => resolve(e.target.result);
-          reader.onerror = err => reject(err);
+          reader.onload = (e) => resolve(e.target.result);
+          reader.onerror = () => reject('Error leyendo archivo');
           reader.readAsDataURL(file);
         });
 
-        const pageWidth = pdf.internal.pageSize.getWidth();
-        const pageHeight = pdf.internal.pageSize.getHeight();
-
-        // Añade imagen ajustada para llenar la página
-        pdf.addImage(imgData, 'JPEG', 0, 0, pageWidth, pageHeight);
+        pdf.addImage(imgData, 'JPEG', 0, 0, pageWidth, pageHeight, undefined, 'FAST');
 
         if (i < files.length - 1) {
           pdf.addPage();
         }
       }
 
-      pdf.save('imagenes.pdf');
+      let nombrePDF = document.getElementById('pdfName').value;
+      if (!nombrePDF) nombrePDF = 'documento';
+
+      pdf.save(nombrePDF + '.pdf');
+      document.getElementById('doneSound').play();
     });
   </script>
 </body>
