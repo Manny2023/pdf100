@@ -2,32 +2,55 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8" />
-  <title>PDF TOOL</title>
+  <title>MannyManSistem PDF TOOL</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <link rel="manifest" href="manifest.json" />
-  <link rel="stylesheet" href="style.css" />
-  <script>
-    if ('serviceWorker' in navigator) {
-      window.addEventListener('load', () => {
-        navigator.serviceWorker.register('service-worker.js');
-      });
-    }
-  </script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
   <style>
+    body {
+      font-family: 'Poppins', sans-serif;
+      text-align: center;
+      background: #fafafa;
+      margin: 0;
+      padding: 20px;
+    }
+    h1 {
+      color: #111;
+      margin-bottom: 10px;
+    }
+    input, button {
+      margin: 6px;
+      padding: 10px;
+      border-radius: 6px;
+      border: 1px solid #ccc;
+      font-size: 16px;
+    }
+    button {
+      cursor: pointer;
+      transition: 0.3s;
+    }
+    #convertBtn {
+      background: #28a745;
+      color: white;
+      border: none;
+    }
+    #convertBtn:hover {
+      background: #1e7e34;
+    }
+    #resetBtn {
+      background: #dc3545;
+      color: white;
+      border: none;
+    }
+    #resetBtn:hover {
+      background: #b02a37;
+    }
     #progressBar {
       width: 100%;
       height: 20px;
-      appearance: none;
-      -webkit-appearance: none;
       border-radius: 10px;
-      overflow: hidden;
       background: #ddd;
-      position: relative;
-    }
-    #progressBar::-webkit-progress-bar {
-      background-color: #ddd;
-      border-radius: 10px;
+      margin-top: 10px;
     }
     #progressBar::-webkit-progress-value {
       background: linear-gradient(270deg, #ff6b6b, #f7d794, #ff6b6b);
@@ -41,140 +64,179 @@
       100% {background-position: 0% 50%;}
     }
 
-    button {
-      padding: 10px 20px;
-      font-size: 16px;
-      border: none;
-      border-radius: 6px;
-      cursor: pointer;
-      margin: 5px;
-      transition: background 0.3s;
+    .preview {
+      margin-top: 20px;
+      background: #fff;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+      border-radius: 12px;
+      overflow: hidden;
+      display: inline-block;
+      width: 250px;
     }
-    #convertBtn {
-      background: #28a745;
+    .preview canvas {
+      width: 100%;
+      display: block;
+    }
+    .preview-title {
+      font-weight: bold;
+      padding: 8px;
       color: white;
-    }
-    #convertBtn:hover {
-      background: #218838;
-    }
-    #resetBtn {
-      background: #dc3545;
-      color: white;
-    }
-    #resetBtn:hover {
-      background: #c82333;
+      text-align: center;
+      background: #111;
     }
   </style>
 </head>
 
 <body>
-  <div class="container">
-    <h1>mannymansistem</h1>
-    <p>Sube imágenes (.webp, .jpg, .png) y crea tu PDF 📝</p>
+  <h1>MannyManSistem PDF TOOL 💾</h1>
+  <p>Crea tu PDF con estilo marcado, sin pausas y vista previa 🔥</p>
 
-    <input type="file" id="fileInput" multiple accept="image/*" /><br /><br />
+  <input type="file" id="fileInput" multiple accept="image/*"><br><br>
 
-    <label for="quality">Calidad JPG (%): </label>
-    <input type="range" id="quality" min="0.1" max="1.0" step="0.1" value="0.6" />
-    <span id="qVal">60%</span><br /><br />
+  <label for="pdfTitle">Título del PDF:</label><br>
+  <input type="text" id="pdfTitle" placeholder="Ejemplo: Catálogo AVON"><br><br>
 
-    <label for="pdfName">Nombre del PDF:</label>
-    <input type="text" id="pdfName" placeholder="Ejemplo: catalogo-avon" /><br /><br />
+  <label for="colorPicker">Color del fondo del título:</label><br>
+  <input type="color" id="colorPicker" value="#ff69b4"><br><br>
 
-    <button id="convertBtn">Crear PDF</button>
-    <button id="resetBtn">Reiniciar</button>
+  <label for="quality">Calidad JPG (%):</label><br>
+  <input type="range" id="quality" min="0.1" max="1.0" step="0.1" value="0.8">
+  <span id="qVal">80%</span><br><br>
 
-    <br /><br />
-    <progress id="progressBar" value="0" max="100" style="display:none;"></progress>
+  <label for="pdfName">Nombre del archivo PDF:</label><br>
+  <input type="text" id="pdfName" placeholder="Ejemplo: catalogo-avon"><br><br>
+
+  <button id="convertBtn">Crear PDF</button>
+  <button id="resetBtn">Reiniciar</button>
+
+  <progress id="progressBar" value="0" max="100" style="display:none;"></progress>
+
+  <div id="previewContainer" class="preview" style="display:none;">
+    <div id="previewTitle" class="preview-title">Vista previa</div>
+    <canvas id="previewCanvas"></canvas>
   </div>
 
   <audio id="doneSound" src="https://www.soundjay.com/buttons/sounds/button-3.mp3" preload="auto"></audio>
 
   <script>
-    const qualityInput = document.getElementById('quality');
-    const qVal = document.getElementById('qVal');
-    const fileInput = document.getElementById('fileInput');
-    const progressBar = document.getElementById('progressBar');
-    const doneSound = document.getElementById('doneSound');
-    const pdfName = document.getElementById('pdfName');
-    const resetBtn = document.getElementById('resetBtn');
+    const { jsPDF } = window.jspdf;
+    const fileInput = document.getElementById("fileInput");
+    const pdfName = document.getElementById("pdfName");
+    const pdfTitle = document.getElementById("pdfTitle");
+    const colorPicker = document.getElementById("colorPicker");
+    const qualityInput = document.getElementById("quality");
+    const qVal = document.getElementById("qVal");
+    const progressBar = document.getElementById("progressBar");
+    const doneSound = document.getElementById("doneSound");
+    const resetBtn = document.getElementById("resetBtn");
+    const previewCanvas = document.getElementById("previewCanvas");
+    const previewContainer = document.getElementById("previewContainer");
+    const previewTitle = document.getElementById("previewTitle");
 
-    // Mostrar porcentaje de calidad
-    qualityInput.oninput = () => {
-      qVal.textContent = Math.round(qualityInput.value * 100) + '%';
-    };
+    qualityInput.oninput = () => qVal.textContent = Math.round(qualityInput.value * 100) + "%";
 
-    // Reiniciar todo sin F5
-    resetBtn.addEventListener('click', () => {
-      fileInput.value = null; // borra selección de imágenes
-      pdfName.value = ''; // borra nombre del PDF
-      progressBar.style.display = 'none';
-      progressBar.value = 0;
-      qualityInput.value = 0.6;
-      qVal.textContent = '60%';
-      window.scrollTo({ top: 0, behavior: 'smooth' });
-    });
-
-    // Crear PDF
-    document.getElementById('convertBtn').addEventListener('click', async () => {
-      const { jsPDF } = window.jspdf;
-      const pdf = new jsPDF();
-
-      const files = fileInput.files;
-      if (files.length === 0) {
-        alert('Por favor, selecciona al menos una imagen.');
+    // --- Vista previa ---
+    fileInput.addEventListener("change", async () => {
+      if (fileInput.files.length === 0) {
+        previewContainer.style.display = "none";
         return;
       }
+      const file = fileInput.files[0];
+      const reader = new FileReader();
+      reader.onload = () => showPreview(reader.result);
+      reader.readAsDataURL(file);
+    });
 
+    async function showPreview(imgSrc) {
+      const img = new Image();
+      img.onload = () => {
+        const canvas = previewCanvas;
+        const ctx = canvas.getContext("2d");
+        const w = 250, h = 350;
+        canvas.width = w;
+        canvas.height = h;
+
+        // Fondo del título (marcado)
+        ctx.fillStyle = colorPicker.value;
+        ctx.fillRect(0, 0, w, 40);
+
+        ctx.fillStyle = "white";
+        ctx.font = "bold 16px sans-serif";
+        ctx.textAlign = "center";
+        ctx.fillText(pdfTitle.value || "Título", w/2, 25);
+
+        // Imagen ocupa el resto
+        ctx.drawImage(img, 0, 40, w, h - 40);
+        previewContainer.style.display = "inline-block";
+        previewTitle.textContent = "Vista previa del PDF";
+      };
+      img.src = imgSrc;
+    }
+
+    // --- Crear PDF ---
+    document.getElementById("convertBtn").addEventListener("click", async () => {
+      const pdf = new jsPDF();
+      const files = fileInput.files;
+      if (files.length === 0) return alert("Selecciona al menos una imagen.");
+
+      const titleText = pdfTitle.value.trim();
+      const titleColor = colorPicker.value;
       const quality = parseFloat(qualityInput.value);
       const pageWidth = pdf.internal.pageSize.getWidth();
       const pageHeight = pdf.internal.pageSize.getHeight();
 
-      progressBar.style.display = 'block';
+      progressBar.style.display = "block";
       progressBar.value = 0;
 
       for (let i = 0; i < files.length; i++) {
         const file = files[i];
-
         const imgData = await new Promise((resolve, reject) => {
           const reader = new FileReader();
           reader.onload = () => resolve(reader.result);
-          reader.onerror = err => reject(err);
+          reader.onerror = reject;
           reader.readAsDataURL(file);
         });
 
         const img = new Image();
-        await new Promise((resolve) => {
-          img.onload = resolve;
+        await new Promise((res) => {
+          img.onload = res;
           img.src = imgData;
         });
 
-        const canvas = document.createElement('canvas');
-        canvas.width = img.width;
-        canvas.height = img.height;
-        const ctx = canvas.getContext('2d');
-        ctx.drawImage(img, 0, 0);
-
-        const compressedImgData = canvas.toDataURL('image/jpeg', quality);
-        pdf.addImage(compressedImgData, 'JPEG', 0, 0, pageWidth, pageHeight);
-
-        if (i < files.length - 1) {
-          pdf.addPage();
+        // Dibuja título marcado
+        if (titleText) {
+          pdf.setFillColor(titleColor);
+          pdf.rect(0, 0, pageWidth, 20, "F");
+          pdf.setTextColor("#FFFFFF");
+          pdf.setFontSize(16);
+          pdf.text(titleText, pageWidth / 2, 13, { align: "center" });
         }
 
-        // Animar progreso
-        for (let progress = progressBar.value; progress <= ((i + 1) / files.length) * 100; progress++) {
-          progressBar.value = progress;
-          await new Promise(r => setTimeout(r, 10));
-        }
+        // Imagen ocupa toda la página (sin márgenes)
+        const topMargin = titleText ? 20 : 0;
+        pdf.addImage(img, "JPEG", 0, topMargin, pageWidth, pageHeight - topMargin);
+
+        if (i < files.length - 1) pdf.addPage();
+
+        progressBar.value = ((i + 1) / files.length) * 100;
+        await new Promise(r => setTimeout(r, 15));
       }
 
-      const nombrePDF = pdfName.value.trim() || 'documento';
-      pdf.save(nombrePDF + '.pdf');
-
-      progressBar.style.display = 'none';
-      progressBar.value = 0;
+      const name = pdfName.value.trim() || "documento";
+      pdf.save(name + ".pdf");
+      progressBar.style.display = "none";
       doneSound.play();
+    });
+
+    resetBtn.addEventListener("click", () => {
+      fileInput.value = "";
+      pdfName.value = "";
+      pdfTitle.value = "";
+      previewContainer.style.display = "none";
+      progressBar.style.display = "none";
+      progressBar.value = 0;
+      qualityInput.value = 0.8;
+      qVal.textContent = "80%";
     });
   </script>
 </body>
