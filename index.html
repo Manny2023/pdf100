@@ -2,114 +2,41 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8" />
-  <title>MannyManSistem PDF TOOL</title>
+  <title>MannyManSistem PDF TOOL (Optimizado)</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <link rel="manifest" href="manifest.json" />
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
   <style>
-    body {
-      font-family: 'Poppins', sans-serif;
-      text-align: center;
-      background: #fafafa;
-      margin: 0;
-      padding: 20px;
-    }
-    h1 {
-      color: #111;
-      margin-bottom: 10px;
-    }
-    input, button {
-      margin: 6px;
-      padding: 10px;
-      border-radius: 6px;
-      border: 1px solid #ccc;
-      font-size: 16px;
-    }
-    button {
-      cursor: pointer;
-      transition: 0.3s;
-    }
-    #convertBtn {
-      background: #28a745;
-      color: white;
-      border: none;
-    }
-    #convertBtn:hover {
-      background: #1e7e34;
-    }
-    #convertNoTitleBtn {
-      background: #007bff;
-      color: white;
-      border: none;
-    }
-    #convertNoTitleBtn:hover {
-      background: #0056b3;
-    }
-    #resetBtn {
-      background: #dc3545;
-      color: white;
-      border: none;
-    }
-    #resetBtn:hover {
-      background: #b02a37;
-    }
-    #progressBar {
-      width: 100%;
-      height: 20px;
-      border-radius: 10px;
-      background: #ddd;
-      margin-top: 10px;
-    }
-    #progressBar::-webkit-progress-value {
-      background: linear-gradient(270deg, #ff6b6b, #f7d794, #ff6b6b);
-      background-size: 400% 400%;
-      animation: gradientAnimation 2s ease infinite;
-      border-radius: 10px;
-    }
-    @keyframes gradientAnimation {
-      0% {background-position: 0% 50%;}
-      50% {background-position: 100% 50%;}
-      100% {background-position: 0% 50%;}
-    }
-    .preview {
-      margin-top: 20px;
-      background: #fff;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-      border-radius: 12px;
-      overflow: hidden;
-      display: inline-block;
-      width: 250px;
-    }
-    .preview canvas {
-      width: 100%;
-      display: block;
-    }
-    .preview-title {
-      font-weight: bold;
-      padding: 8px;
-      color: white;
-      text-align: center;
-      background: #111;
-    }
+    body {font-family:'Poppins',sans-serif;text-align:center;background:#fafafa;margin:0;padding:20px;}
+    h1 {color:#111;margin-bottom:10px;}
+    input,button {margin:6px;padding:10px;border-radius:6px;border:1px solid #ccc;font-size:16px;}
+    button {cursor:pointer;transition:.3s;}
+    #convertBtn{background:#28a745;color:white;border:none;}
+    #convertBtn:hover{background:#1e7e34;}
+    #convertNoTitleBtn{background:#007bff;color:white;border:none;}
+    #convertNoTitleBtn:hover{background:#0056b3;}
+    #resetBtn{background:#dc3545;color:white;border:none;}
+    #resetBtn:hover{background:#b02a37;}
+    #progressBar{width:100%;height:20px;border-radius:10px;background:#ddd;margin-top:10px;}
+    #progressBar::-webkit-progress-value{background:linear-gradient(270deg,#ff6b6b,#f7d794,#ff6b6b);background-size:400% 400%;animation:gradientAnimation 2s ease infinite;border-radius:10px;}
+    @keyframes gradientAnimation{0%{background-position:0% 50%;}50%{background-position:100% 50%;}100%{background-position:0% 50%;}}
+    .preview{margin-top:20px;background:#fff;box-shadow:0 4px 12px rgba(0,0,0,0.15);border-radius:12px;overflow:hidden;display:inline-block;width:250px;}
+    .preview canvas{width:100%;display:block;}
+    .preview-title{font-weight:bold;padding:8px;color:white;text-align:center;background:#111;}
   </style>
 </head>
 
 <body>
   <h1>MannyManSistem PDF TOOL 💾</h1>
-  <p>Crea tu PDF con o sin título, vista previa y estilo 🔥</p>
+  <p>Crea tu PDF con imágenes comprimidas (más liviano y rápido) ⚡</p>
 
   <input type="file" id="fileInput" multiple accept="image/*"><br><br>
-
   <label for="pdfTitle">Título del PDF:</label><br>
   <input type="text" id="pdfTitle" placeholder="Ejemplo: Catálogo AVON"><br><br>
-
   <label for="colorPicker">Color del fondo del título:</label><br>
   <input type="color" id="colorPicker" value="#ff69b4"><br><br>
-
   <label for="quality">Calidad JPG (%):</label><br>
-  <input type="range" id="quality" min="0.1" max="1.0" step="0.1" value="0.8">
-  <span id="qVal">80%</span><br><br>
-
+  <input type="range" id="quality" min="0.1" max="1.0" step="0.1" value="0.6">
+  <span id="qVal">60%</span><br><br>
   <label for="pdfName">Nombre del archivo PDF:</label><br>
   <input type="text" id="pdfName" placeholder="Ejemplo: catalogo-avon"><br><br>
 
@@ -143,7 +70,7 @@
 
     qualityInput.oninput = () => qVal.textContent = Math.round(qualityInput.value * 100) + "%";
 
-    // --- Vista previa ---
+    // Vista previa
     fileInput.addEventListener("change", async () => {
       if (fileInput.files.length === 0) {
         previewContainer.style.display = "none";
@@ -161,22 +88,29 @@
         const canvas = previewCanvas;
         const ctx = canvas.getContext("2d");
         const w = 250, h = 350;
-        canvas.width = w;
-        canvas.height = h;
-
+        canvas.width = w; canvas.height = h;
         ctx.fillStyle = colorPicker.value;
         ctx.fillRect(0, 0, w, 40);
-
         ctx.fillStyle = "white";
         ctx.font = "bold 16px sans-serif";
         ctx.textAlign = "center";
         ctx.fillText(pdfTitle.value || "Título", w/2, 25);
-
         ctx.drawImage(img, 0, 40, w, h - 40);
         previewContainer.style.display = "inline-block";
         previewTitle.textContent = "Vista previa del PDF";
       };
       img.src = imgSrc;
+    }
+
+    async function compressImage(img, quality) {
+      const canvas = document.createElement("canvas");
+      const maxWidth = 1280; // limitar resolución para acelerar
+      const scale = Math.min(maxWidth / img.width, 1);
+      canvas.width = img.width * scale;
+      canvas.height = img.height * scale;
+      const ctx = canvas.getContext("2d");
+      ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+      return canvas.toDataURL("image/jpeg", quality);
     }
 
     async function crearPDF(incluirTitulo = true) {
@@ -203,13 +137,12 @@
         });
 
         const img = new Image();
-        await new Promise((res) => {
-          img.onload = res;
-          img.src = imgData;
-        });
+        await new Promise(res => { img.onload = res; img.src = imgData; });
+
+        // 👉 Comprimir la imagen antes de agregarla
+        const compressed = await compressImage(img, quality);
 
         let topMargin = 0;
-
         if (incluirTitulo && titleText) {
           pdf.setFillColor(titleColor);
           pdf.rect(0, 0, pageWidth, 20, "F");
@@ -219,16 +152,14 @@
           topMargin = 20;
         }
 
-        pdf.addImage(img, "JPEG", 0, topMargin, pageWidth, pageHeight - topMargin, undefined, "FAST");
-
+        pdf.addImage(compressed, "JPEG", 0, topMargin, pageWidth, pageHeight - topMargin, undefined, "FAST");
         if (i < files.length - 1) pdf.addPage();
 
         progressBar.value = ((i + 1) / files.length) * 100;
-        await new Promise(r => setTimeout(r, 15));
+        await new Promise(r => setTimeout(r, 10));
       }
 
-      const name = pdfName.value.trim() || "documento";
-      pdf.save(name + ".pdf");
+      pdf.save((pdfName.value.trim() || "documento") + ".pdf");
       progressBar.style.display = "none";
       doneSound.play();
     }
@@ -243,8 +174,8 @@
       previewContainer.style.display = "none";
       progressBar.style.display = "none";
       progressBar.value = 0;
-      qualityInput.value = 0.8;
-      qVal.textContent = "80%";
+      qualityInput.value = 0.6;
+      qVal.textContent = "60%";
     });
   </script>
 </body>
