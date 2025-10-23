@@ -37,6 +37,14 @@
     #convertBtn:hover {
       background: #1e7e34;
     }
+    #convertNoTitleBtn {
+      background: #007bff;
+      color: white;
+      border: none;
+    }
+    #convertNoTitleBtn:hover {
+      background: #0056b3;
+    }
     #resetBtn {
       background: #dc3545;
       color: white;
@@ -63,7 +71,6 @@
       50% {background-position: 100% 50%;}
       100% {background-position: 0% 50%;}
     }
-
     .preview {
       margin-top: 20px;
       background: #fff;
@@ -89,7 +96,7 @@
 
 <body>
   <h1>MannyManSistem PDF TOOL 💾</h1>
-  <p>Crea tu PDF con estilo marcado, sin pausas y vista previa 🔥</p>
+  <p>Crea tu PDF con o sin título, vista previa y estilo 🔥</p>
 
   <input type="file" id="fileInput" multiple accept="image/*"><br><br>
 
@@ -106,8 +113,9 @@
   <label for="pdfName">Nombre del archivo PDF:</label><br>
   <input type="text" id="pdfName" placeholder="Ejemplo: catalogo-avon"><br><br>
 
-  <button id="convertBtn">Crear PDF</button>
-  <button id="resetBtn">Reiniciar</button>
+  <button id="convertBtn">📄 Crear PDF con Título</button>
+  <button id="convertNoTitleBtn">📄 Crear PDF sin Título</button>
+  <button id="resetBtn">🔄 Reiniciar</button>
 
   <progress id="progressBar" value="0" max="100" style="display:none;"></progress>
 
@@ -156,7 +164,6 @@
         canvas.width = w;
         canvas.height = h;
 
-        // Fondo del título (marcado)
         ctx.fillStyle = colorPicker.value;
         ctx.fillRect(0, 0, w, 40);
 
@@ -165,7 +172,6 @@
         ctx.textAlign = "center";
         ctx.fillText(pdfTitle.value || "Título", w/2, 25);
 
-        // Imagen ocupa el resto
         ctx.drawImage(img, 0, 40, w, h - 40);
         previewContainer.style.display = "inline-block";
         previewTitle.textContent = "Vista previa del PDF";
@@ -173,8 +179,7 @@
       img.src = imgSrc;
     }
 
-    // --- Crear PDF ---
-    document.getElementById("convertBtn").addEventListener("click", async () => {
+    async function crearPDF(incluirTitulo = true) {
       const pdf = new jsPDF();
       const files = fileInput.files;
       if (files.length === 0) return alert("Selecciona al menos una imagen.");
@@ -203,18 +208,18 @@
           img.src = imgData;
         });
 
-        // Dibuja título marcado
-        if (titleText) {
+        let topMargin = 0;
+
+        if (incluirTitulo && titleText) {
           pdf.setFillColor(titleColor);
           pdf.rect(0, 0, pageWidth, 20, "F");
           pdf.setTextColor("#FFFFFF");
           pdf.setFontSize(16);
           pdf.text(titleText, pageWidth / 2, 13, { align: "center" });
+          topMargin = 20;
         }
 
-        // Imagen ocupa toda la página (sin márgenes)
-        const topMargin = titleText ? 20 : 0;
-        pdf.addImage(img, "JPEG", 0, topMargin, pageWidth, pageHeight - topMargin);
+        pdf.addImage(img, "JPEG", 0, topMargin, pageWidth, pageHeight - topMargin, undefined, "FAST");
 
         if (i < files.length - 1) pdf.addPage();
 
@@ -226,7 +231,10 @@
       pdf.save(name + ".pdf");
       progressBar.style.display = "none";
       doneSound.play();
-    });
+    }
+
+    document.getElementById("convertBtn").addEventListener("click", () => crearPDF(true));
+    document.getElementById("convertNoTitleBtn").addEventListener("click", () => crearPDF(false));
 
     resetBtn.addEventListener("click", () => {
       fileInput.value = "";
