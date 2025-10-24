@@ -1,242 +1,214 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8" />
-  <title>MannyManSistem PDF TOOL (ZIP + Compresión + Orden)</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
-  <style>
-    body {font-family:'Poppins',sans-serif;text-align:center;background:#fafafa;margin:0;padding:20px;}
-    h1 {color:#111;margin-bottom:10px;}
-    input,button {margin:6px;padding:10px;border-radius:6px;border:1px solid #ccc;font-size:16px;}
-    button {cursor:pointer;transition:.3s;}
-    #convertBtn{background:#28a745;color:white;border:none;}
-    #convertBtn:hover{background:#1e7e34;}
-    #convertNoTitleBtn{background:#007bff;color:white;border:none;}
-    #convertNoTitleBtn:hover{background:#0056b3;}
-    #resetBtn{background:#dc3545;color:white;border:none;}
-    #resetBtn:hover{background:#b02a37;}
-    #progressBar{width:100%;height:20px;border-radius:10px;background:#ddd;margin-top:10px;}
-    #progressBar::-webkit-progress-value{background:linear-gradient(270deg,#ff6b6b,#f7d794,#ff6b6b);background-size:400% 400%;animation:gradientAnimation 2s ease infinite;border-radius:10px;}
-    @keyframes gradientAnimation{0%{background-position:0% 50%;}50%{background-position:100% 50%;}100%{background-position:0% 50%;}}
-    .preview{margin-top:20px;background:#fff;box-shadow:0 4px 12px rgba(0,0,0,0.15);border-radius:12px;overflow:hidden;display:inline-block;width:250px;}
-    .preview canvas{width:100%;display:block;}
-    .preview-title{font-weight:bold;padding:8px;color:white;text-align:center;background:#111;}
-  </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PDF Turbo Converter ⚡ ULTRA HD Inteligente</title>
+<style>
+  body {
+    background-color: #121212;
+    color: #fff;
+    font-family: Arial, sans-serif;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100vh;
+    margin: 0;
+  }
+  .box {
+    background: #1e1e1e;
+    padding: 25px;
+    border-radius: 10px;
+    box-shadow: 0 0 15px rgba(0,0,0,0.5);
+    width: 90%;
+    max-width: 440px;
+  }
+  input, button {
+    width: 100%;
+    padding: 10px;
+    margin: 8px 0;
+    border-radius: 8px;
+    border: none;
+    outline: none;
+    font-size: 15px;
+  }
+  input[type="file"], input[type="text"] {
+    background: #2a2a2a;
+    color: #ccc;
+  }
+  button {
+    background: #00b4d8;
+    color: #fff;
+    font-weight: bold;
+    cursor: pointer;
+  }
+  button:hover { background: #0096c7; }
+  #progressContainer {
+    width: 100%;
+    background: #333;
+    border-radius: 8px;
+    margin-top: 10px;
+    height: 20px;
+    display: none;
+  }
+  #progressBar {
+    height: 100%;
+    width: 0%;
+    background: #00b4d8;
+    border-radius: 8px;
+    transition: width 0.1s linear;
+  }
+  #status {
+    text-align: center;
+    margin-top: 8px;
+    font-size: 14px;
+    color: #aaa;
+  }
+</style>
 </head>
-
 <body>
-  <h1>MannyManSistem PDF TOOL 💾</h1>
-  <p>Genera tu PDF limpio o un ZIP con marca e imágenes ordenadas y comprimidas ⚡</p>
 
-  <input type="file" id="fileInput" multiple accept="image/*"><br><br>
-  <label for="pdfTitle">Título o marca:</label><br>
-  <input type="text" id="pdfTitle" placeholder="Ejemplo: Catálogo AVON"><br><br>
-  <label for="colorPicker">Color del fondo del título:</label><br>
-  <input type="color" id="colorPicker" value="#ff69b4"><br><br>
+<div class="box">
+  <h2>PDF Turbo Converter ⚡ ULTRA HD</h2>
+  <input type="file" id="imagenes" multiple accept="image/*" />
+  <input type="text" id="nombrePDF" placeholder="Nombre del PDF (sin .pdf)" />
+  <button id="crearPDF">Generar PDF</button>
+  <div id="progressContainer"><div id="progressBar"></div></div>
+  <div id="status"></div>
+</div>
 
-  <!-- NUEVO: Campo para subir el logo -->
-  <label for="logoFile">Logo (se colocará a la derecha del título):</label><br>
-  <input type="file" id="logoFile" accept="image/*"><br><br>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script>
+const { jsPDF } = window.jspdf;
 
-  <label for="quality">Calidad JPG (%):</label><br>
-  <input type="range" id="quality" min="0.1" max="1.0" step="0.1" value="0.6">
-  <span id="qVal">60%</span><br><br>
-  <label for="pdfName">Nombre del archivo:</label><br>
-  <input type="text" id="pdfName" placeholder="Ejemplo: catalogo-avon"><br><br>
+document.getElementById("crearPDF").addEventListener("click", async () => {
+  const archivos = Array.from(document.getElementById("imagenes").files);
+  if (!archivos.length) return alert("Selecciona imágenes primero.");
 
-  <button id="convertBtn">📦 Generar ZIP con Marca</button>
-  <button id="convertNoTitleBtn">📄 Crear PDF sin Marca</button>
-  <button id="resetBtn">🔄 Reiniciar</button>
+  const nombre = (document.getElementById("nombrePDF").value || "imagenes") + ".pdf";
 
-  <progress id="progressBar" value="0" max="100" style="display:none;"></progress>
+  const pdf = new jsPDF({
+    unit: "pt",
+    format: "a4",
+    orientation: "portrait",
+    compress: true
+  });
 
-  <div id="previewContainer" class="preview" style="display:none;">
-    <div id="previewTitle" class="preview-title">Vista previa</div>
-    <canvas id="previewCanvas"></canvas>
-  </div>
+  const progressBar = document.getElementById("progressBar");
+  const progressContainer = document.getElementById("progressContainer");
+  const status = document.getElementById("status");
+  progressContainer.style.display = "block";
 
-  <audio id="doneSound" src="https://www.soundjay.com/buttons/sounds/button-3.mp3" preload="auto"></audio>
+  status.textContent = "Cargando imágenes...";
+  const dataURLs = await Promise.all(archivos.map(a => fileToSmartDataURL(a)));
 
-  <script>
-    const { jsPDF } = window.jspdf;
-    const fileInput = document.getElementById("fileInput");
-    const pdfName = document.getElementById("pdfName");
-    const pdfTitle = document.getElementById("pdfTitle");
-    const colorPicker = document.getElementById("colorPicker");
-    const qualityInput = document.getElementById("quality");
-    const qVal = document.getElementById("qVal");
-    const progressBar = document.getElementById("progressBar");
-    const doneSound = document.getElementById("doneSound");
-    const resetBtn = document.getElementById("resetBtn");
-    const previewCanvas = document.getElementById("previewCanvas");
-    const previewContainer = document.getElementById("previewContainer");
-    const previewTitle = document.getElementById("previewTitle");
-    const logoFile = document.getElementById("logoFile");
+  let total = dataURLs.length;
+  let done = 0;
 
-    let logoImage = null;
+  for (const dataURL of dataURLs) {
+    const img = await loadImage(dataURL);
+    const pageWidth = pdf.internal.pageSize.getWidth();
+    const pageHeight = pdf.internal.pageSize.getHeight();
 
-    qualityInput.oninput = () => qVal.textContent = Math.round(qualityInput.value * 100) + "%";
+    if (done > 0) pdf.addPage();
 
-    // Cargar logo opcional
-    logoFile.addEventListener("change", async () => {
-      if (logoFile.files.length > 0) {
-        const file = logoFile.files[0];
-        logoImage = new Image();
-        logoImage.src = URL.createObjectURL(file);
-        await logoImage.decode();
-      } else {
-        logoImage = null;
-      }
-    });
+    // Fondo blanco
+    pdf.setFillColor(255, 255, 255);
+    pdf.rect(0, 0, pageWidth, pageHeight, "F");
 
-    function sortFilesNaturally(files) {
-      return files.sort((a, b) => {
-        const aName = a.name.replace(/\D/g, '') || a.name;
-        const bName = b.name.replace(/\D/g, '') || b.name;
-        const aNum = parseInt(aName, 10);
-        const bNum = parseInt(bName, 10);
-        if (!isNaN(aNum) && !isNaN(bNum)) return aNum - bNum;
-        return a.name.localeCompare(b.name, undefined, { numeric: true, sensitivity: 'base' });
-      });
-    }
+    // Ajuste proporcional para llenar la página
+    const scale = Math.max(pageWidth / img.width, pageHeight / img.height);
+    const w = img.width * scale;
+    const h = img.height * scale;
+    const x = Math.floor((pageWidth - w) / 2);
+    const y = Math.floor((pageHeight - h) / 2);
 
-    async function compressImage(img, quality) {
-      const canvas = document.createElement("canvas");
-      const maxWidth = 1280;
-      const scale = Math.min(maxWidth / img.width, 1);
-      canvas.width = img.width * scale;
-      canvas.height = img.height * scale;
-      const ctx = canvas.getContext("2d");
-      ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-      return canvas.toDataURL("image/webp", quality);
-    }
+    pdf.addImage(dataURL, "JPEG", x, y, w, h, undefined, "FAST");
 
-    async function crearZIPconMarca() {
-      let files = [...fileInput.files];
-      if (files.length === 0) return alert("Selecciona al menos una imagen.");
-      files = sortFilesNaturally(files);
+    done++;
+    progressBar.style.width = ((done / total) * 100) + "%";
+    status.textContent = `Procesando ${done}/${total}`;
+  }
 
-      const titleText = pdfTitle.value.trim();
-      const titleColor = colorPicker.value;
-      const quality = parseFloat(qualityInput.value);
-      const zip = new JSZip();
+  status.textContent = "Guardando PDF...";
+  pdf.save(nombre);
+  status.textContent = "✅ PDF generado (Modo Inteligente)";
+  setTimeout(() => {
+    progressContainer.style.display = "none";
+    progressBar.style.width = "0%";
+  }, 1500);
+});
 
-      progressBar.style.display = "block";
-      progressBar.value = 0;
+async function fileToSmartDataURL(file) {
+  const dataURL = await fileToBase64(file);
+  const img = await loadImage(dataURL);
 
-      for (let i = 0; i < files.length; i++) {
-        const file = files[i];
-        const imgData = await new Promise((resolve, reject) => {
-          const reader = new FileReader();
-          reader.onload = () => resolve(reader.result);
-          reader.onerror = reject;
-          reader.readAsDataURL(file);
-        });
+  // 🧠 Detección inteligente de nivel de detalle
+  const complexity = await analyzeImageDetail(img);
 
-        const img = new Image();
-        await new Promise(res => { img.onload = res; img.src = imgData; });
+  // Si hay muchos bordes (texto o líneas finas): usa modo HD
+  const isTextual = complexity > 0.10;
 
-        // Crear lienzo con espacio superior
-        const canvas = document.createElement("canvas");
-        canvas.width = img.width;
-        canvas.height = img.height + 80;
-        const ctx = canvas.getContext("2d");
+  const MAX = isTextual ? 4000 : 3200;
+  const QUALITY = isTextual ? 0.95 : 0.85;
 
-        // Fondo del título
-        ctx.fillStyle = titleColor;
-        ctx.fillRect(0, 0, canvas.width, 80);
-        ctx.drawImage(img, 0, 80, canvas.width, img.height);
+  const canvas = document.createElement("canvas");
+  const ctx = canvas.getContext("2d");
 
-        // Texto de marca (centro)
-        ctx.fillStyle = "white";
-        ctx.font = "bold 50px sans-serif";
-        ctx.textAlign = "center";
-        ctx.fillText(titleText || "MannyManSistem", canvas.width / 2, 55);
+  let w = img.width, h = img.height;
+  if (w > h && w > MAX) { h *= MAX / w; w = MAX; }
+  else if (h > MAX) { w *= MAX / h; h = MAX; }
 
-        // Logo del lado derecho
-        if (logoImage) {
-          const logoH = 60; // altura fija dentro de la barra
-          const logoW = logoImage.width * (logoH / logoImage.height);
-          const logoX = canvas.width - logoW - 40; // margen derecho
-          const logoY = 10; // un poco desde arriba
-          ctx.drawImage(logoImage, logoX, logoY, logoW, logoH);
-        }
+  canvas.width = w;
+  canvas.height = h;
 
-        // Comprimir imagen
-        const compressed = canvas.toDataURL("image/webp", quality);
-        const num = String(i + 1).padStart(3, "0");
-        zip.file(`${num}.webp`, compressed.split(',')[1], { base64: true });
+  ctx.imageSmoothingEnabled = true;
+  ctx.imageSmoothingQuality = isTextual ? "medium" : "high";
+  ctx.drawImage(img, 0, 0, w, h);
 
-        progressBar.value = ((i + 1) / files.length) * 100;
-        await new Promise(r => setTimeout(r, 10));
-      }
+  return canvas.toDataURL("image/jpeg", QUALITY);
+}
 
-      const zipBlob = await zip.generateAsync({ type: "blob" });
-      const a = document.createElement("a");
-      a.href = URL.createObjectURL(zipBlob);
-      a.download = (pdfName.value.trim() || "imagenes") + "_con_marca.zip";
-      a.click();
+// 🔍 Analiza cantidad de bordes para detectar texto o detalles
+async function analyzeImageDetail(img) {
+  const canvas = document.createElement("canvas");
+  const ctx = canvas.getContext("2d");
+  const size = 200;
+  canvas.width = size;
+  canvas.height = size;
+  ctx.drawImage(img, 0, 0, size, size);
+  const data = ctx.getImageData(0, 0, size, size).data;
+  let diffCount = 0, total = 0;
 
-      progressBar.style.display = "none";
-      doneSound.play();
-    }
+  for (let i = 0; i < data.length - 4; i += 4) {
+    const lum1 = 0.3 * data[i] + 0.59 * data[i+1] + 0.11 * data[i+2];
+    const lum2 = 0.3 * data[i+4] + 0.59 * data[i+5] + 0.11 * data[i+6];
+    if (Math.abs(lum1 - lum2) > 30) diffCount++;
+    total++;
+  }
 
-    async function crearPDFsinMarca() {
-      const pdf = new jsPDF();
-      let files = [...fileInput.files];
-      if (files.length === 0) return alert("Selecciona al menos una imagen.");
-      files = sortFilesNaturally(files);
+  return diffCount / total; // proporción de cambios bruscos = detalle
+}
 
-      const quality = parseFloat(qualityInput.value);
-      const pageWidth = pdf.internal.pageSize.getWidth();
-      const pageHeight = pdf.internal.pageSize.getHeight();
+function fileToBase64(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = e => resolve(e.target.result);
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
+}
 
-      progressBar.style.display = "block";
-      progressBar.value = 0;
+function loadImage(src) {
+  return new Promise((res, rej) => {
+    const img = new Image();
+    img.onload = () => res(img);
+    img.onerror = rej;
+    img.src = src;
+  });
+}
+</script>
 
-      for (let i = 0; i < files.length; i++) {
-        const file = files[i];
-        const imgData = await new Promise((resolve, reject) => {
-          const reader = new FileReader();
-          reader.onload = () => resolve(reader.result);
-          reader.onerror = reject;
-          reader.readAsDataURL(file);
-        });
-
-        const img = new Image();
-        await new Promise(res => { img.onload = res; img.src = imgData; });
-
-        const compressed = await compressImage(img, quality);
-        pdf.addImage(compressed, "WEBP", 0, 0, pageWidth, pageHeight, undefined, "FAST");
-
-        if (i < files.length - 1) pdf.addPage();
-
-        progressBar.value = ((i + 1) / files.length) * 100;
-        await new Promise(r => setTimeout(r, 10));
-      }
-
-      pdf.save((pdfName.value.trim() || "documento") + "_sin_marca.pdf");
-      progressBar.style.display = "none";
-      doneSound.play();
-    }
-
-    document.getElementById("convertBtn").addEventListener("click", crearZIPconMarca);
-    document.getElementById("convertNoTitleBtn").addEventListener("click", crearPDFsinMarca);
-
-    resetBtn.addEventListener("click", () => {
-      fileInput.value = "";
-      pdfName.value = "";
-      pdfTitle.value = "";
-      logoFile.value = "";
-      logoImage = null;
-      previewContainer.style.display = "none";
-      progressBar.style.display = "none";
-      progressBar.value = 0;
-      qualityInput.value = 0.6;
-      qVal.textContent = "60%";
-    });
-  </script>
 </body>
 </html>
